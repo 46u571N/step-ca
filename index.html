@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>step-ca · Ciclo de vida de certificados</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #f5f6f8;
@@ -45,7 +45,159 @@
     line-height: 1.6;
   }
 
-  /* Header */
+  /* ─── INTRO OVERLAY ─────────────────────────────────────────── */
+  #intro-overlay {
+    position: fixed;
+    inset: 0;
+    background: #0d1117;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  #intro-overlay.fade-out {
+    animation: overlayFadeOut 0.5s ease forwards;
+  }
+  @keyframes overlayFadeOut {
+    to { opacity: 0; pointer-events: none; }
+  }
+
+  .intro-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #2dd4a0;
+    background: rgba(45,212,160,0.1);
+    border: 1px solid rgba(45,212,160,0.25);
+    padding: 4px 12px;
+    border-radius: 4px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.4s ease 0.1s forwards;
+  }
+
+  .intro-pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 48px;
+  }
+
+  .intro-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+  }
+
+  .intro-node-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 1.5px solid #2dd4a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    background: rgba(45,212,160,0.08);
+    position: relative;
+  }
+
+  .intro-node-circle.blue   { border-color: #60a5fa; background: rgba(96,165,250,0.08); }
+  .intro-node-circle.purple { border-color: #a78bfa; background: rgba(167,139,250,0.08); }
+  .intro-node-circle.amber  { border-color: #fbbf24; background: rgba(251,191,36,0.08); }
+  .intro-node-circle.coral  { border-color: #f87171; background: rgba(248,113,113,0.08); }
+
+  .intro-node-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: #6b7280;
+    text-align: center;
+    max-width: 72px;
+    line-height: 1.3;
+  }
+
+  .intro-arrow {
+    width: 32px;
+    height: 1.5px;
+    background: linear-gradient(90deg, #2dd4a0 0%, #60a5fa 100%);
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .intro-arrow.blue-purple { background: linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%); }
+  .intro-arrow.purple-amber { background: linear-gradient(90deg, #a78bfa 0%, #fbbf24 100%); }
+  .intro-arrow.amber-coral  { background: linear-gradient(90deg, #fbbf24 0%, #f87171 100%); }
+
+  /* node animation delays */
+  .intro-node:nth-child(1) { animation: fadeUp 0.35s ease 0.3s forwards; }
+  .intro-node:nth-child(3) { animation: fadeUp 0.35s ease 0.65s forwards; }
+  .intro-node:nth-child(5) { animation: fadeUp 0.35s ease 1.0s forwards; }
+  .intro-node:nth-child(7) { animation: fadeUp 0.35s ease 1.35s forwards; }
+  .intro-node:nth-child(9) { animation: fadeUp 0.35s ease 1.7s forwards; }
+  .intro-node:nth-child(11) { animation: fadeUp 0.35s ease 2.05s forwards; }
+
+  .intro-arrow:nth-child(2)  { animation: arrowIn 0.25s ease 0.55s forwards; }
+  .intro-arrow:nth-child(4)  { animation: arrowIn 0.25s ease 0.9s forwards; }
+  .intro-arrow:nth-child(6)  { animation: arrowIn 0.25s ease 1.25s forwards; }
+  .intro-arrow:nth-child(8)  { animation: arrowIn 0.25s ease 1.6s forwards; }
+  .intro-arrow:nth-child(10) { animation: arrowIn 0.25s ease 1.95s forwards; }
+
+  @keyframes arrowIn {
+    to { opacity: 1; transform: scaleX(1); }
+  }
+
+  .intro-subtitle {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #4b5563;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.4s ease 2.5s forwards;
+  }
+
+  .intro-skip {
+    position: absolute;
+    bottom: 32px;
+    right: 36px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #374151;
+    border: 1px solid #1f2937;
+    padding: 5px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: transparent;
+    transition: color 0.2s, border-color 0.2s;
+    opacity: 0;
+    animation: fadeUp 0.3s ease 0.8s forwards;
+  }
+  .intro-skip:hover { color: #9ca3af; border-color: #374151; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* blinking cursor on last node */
+  .intro-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: #2dd4a0;
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 0.9s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ─── MAIN UI ──────────────────────────────────────────────── */
   header {
     border-bottom: 1px solid var(--border);
     padding: 28px 40px;
@@ -68,19 +220,9 @@
     border-radius: 4px;
     letter-spacing: 0.02em;
   }
-  header h1 {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text);
-  }
-  header span {
-    font-size: 13px;
-    color: var(--text3);
-    margin-left: auto;
-    font-family: var(--mono);
-  }
+  header h1 { font-size: 15px; font-weight: 500; color: var(--text); }
+  header span { font-size: 13px; color: var(--text3); margin-left: auto; font-family: var(--mono); }
 
-  /* Nav tabs */
   nav {
     display: flex;
     gap: 4px;
@@ -109,7 +251,6 @@
     border-bottom-color: var(--bg2);
   }
 
-  /* Main layout */
   main { padding: 40px; max-width: 960px; margin: 0 auto; }
   .section { display: none; }
   .section.active { display: block; }
@@ -118,13 +259,7 @@
   .section-intro h2 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
   .section-intro p { font-size: 14px; color: var(--text2); }
 
-  /* Stage nav */
-  .stage-nav {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
+  .stage-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
   .stage-btn {
     font-size: 12px;
     font-family: var(--font);
@@ -136,7 +271,7 @@
     cursor: pointer;
     transition: all .2s;
   }
-  .stage-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .stage-btn:hover { color: var(--text); }
   .stage-btn.active {
     background: var(--teal-dim);
     color: var(--teal);
@@ -144,7 +279,6 @@
     font-weight: 500;
   }
 
-  /* Cards */
   .card {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -163,16 +297,15 @@
     border-radius: 4px;
     margin-bottom: 10px;
   }
-  .badge-teal { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-border); }
-  .badge-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+  .badge-teal   { background: var(--teal-dim);   color: var(--teal);   border: 1px solid var(--teal-border); }
+  .badge-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid var(--blue-border); }
   .badge-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple-border); }
-  .badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
-  .badge-coral { background: var(--coral-dim); color: var(--coral); border: 1px solid var(--coral-border); }
+  .badge-amber  { background: var(--amber-dim);  color: var(--amber);  border: 1px solid rgba(251,191,36,0.3); }
+  .badge-coral  { background: var(--coral-dim);  color: var(--coral);  border: 1px solid var(--coral-border); }
 
   .panel-title { font-size: 17px; font-weight: 500; margin-bottom: 6px; }
-  .panel-desc { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.6; }
+  .panel-desc  { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.6; }
 
-  /* Flow */
   .flow { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; }
   .flow-row { display: flex; align-items: center; gap: 10px; }
   .flow-box {
@@ -184,15 +317,14 @@
     font-size: 13px;
     color: var(--text);
   }
-  .flow-box.hi { border-color: var(--teal-border); background: var(--teal-dim); color: var(--teal); }
-  .flow-box.hi-blue { border-color: var(--blue-border); background: var(--blue-dim); color: var(--blue); }
+  .flow-box.hi        { border-color: var(--teal-border);   background: var(--teal-dim);   color: var(--teal); }
+  .flow-box.hi-blue   { border-color: var(--blue-border);   background: var(--blue-dim);   color: var(--blue); }
   .flow-box.hi-purple { border-color: var(--purple-border); background: var(--purple-dim); color: var(--purple); }
-  .flow-box.hi-coral { border-color: var(--coral-border); background: var(--coral-dim); color: var(--coral); }
+  .flow-box.hi-coral  { border-color: var(--coral-border);  background: var(--coral-dim);  color: var(--coral); }
   .flow-box.dim { opacity: .4; }
-  .flow-arr { color: var(--text3); font-size: 16px; flex-shrink: 0; }
+  .flow-arr  { color: var(--text3); font-size: 16px; flex-shrink: 0; }
   .flow-down { margin-left: 28px; color: var(--text3); font-size: 16px; }
 
-  /* Detail grid */
   .detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -216,7 +348,6 @@
     font-family: var(--mono);
   }
 
-  /* Tags */
   .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .tag {
     font-size: 11px;
@@ -228,7 +359,6 @@
     color: var(--text3);
   }
 
-  /* Nav row */
   .nav-row {
     display: flex;
     justify-content: space-between;
@@ -248,26 +378,120 @@
     cursor: pointer;
     transition: all .2s;
   }
-  .nav-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .nav-btn:hover { color: var(--text); }
   .step-counter { font-size: 12px; color: var(--text3); font-family: var(--mono); }
 
-  /* Revocation */
+  /* ─── CLI EXPANDABLE BLOCK ─────────────────────────────────── */
+  .cli-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    cursor: pointer;
+    width: fit-content;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font);
+    color: var(--teal);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: opacity 0.15s;
+  }
+  .cli-toggle:hover { opacity: 0.75; }
+  .cli-toggle-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--teal-dim);
+    border: 1px solid var(--teal-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .cli-toggle.open .cli-toggle-icon { transform: rotate(90deg); }
+
+  .cli-block {
+    display: none;
+    margin-top: 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--teal-border);
+    background: #f0faf6;
+    overflow: hidden;
+  }
+  .cli-block.open { display: block; animation: slideDown 0.18s ease; }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .cli-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: rgba(14,158,113,0.06);
+    border-bottom: 1px solid var(--teal-border);
+  }
+  .cli-header-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .cli-copy {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--teal);
+    background: none;
+    border: 1px solid var(--teal-border);
+    border-radius: 3px;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .cli-copy:hover { background: var(--teal-dim); }
+  .cli-copy.copied { color: #0e9e71; }
+
+  .cli-pre {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #0a6e4e;
+    padding: 14px 16px;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.75;
+    margin: 0;
+  }
+
+  /* comment lines inside CLI */
+  .cli-pre .comment { color: #9ca3af; font-style: italic; }
+  .cli-pre .flag    { color: #2563eb; }
+  .cli-pre .value   { color: #7c3aed; }
+
+  /* ─── REVOCATION ───────────────────────────────────────────── */
   .revoke-choice { display: flex; gap: 10px; margin-top: 10px; }
   .revoke-opt {
-    flex: 1; padding: 12px; border-radius: var(--radius);
+    flex: 1; padding: 12px;
+    border-radius: var(--radius);
     border: 1px solid var(--border2);
     background: var(--bg3);
     cursor: pointer; font-size: 12px; color: var(--text2);
     text-align: center; font-family: var(--font);
     transition: all .2s;
   }
-  .revoke-opt:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .revoke-opt:hover { color: var(--text); }
   .revoke-opt.sel-passive { border-color: var(--teal-border); background: var(--teal-dim); color: var(--teal); }
   .revoke-opt.sel-active  { border-color: var(--coral-border); background: var(--coral-dim); color: var(--coral); }
   .revoke-detail { margin-top: 12px; padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg3); font-size: 13px; color: var(--text2); line-height: 1.6; display: none; }
   .revoke-detail.visible { display: block; }
 
-  /* Provisioners section */
+  /* ─── PROVISIONERS ─────────────────────────────────────────── */
   .prov-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -283,10 +507,10 @@
     transition: border-color .2s, background .2s;
   }
   .prov-card:hover { border-color: var(--border2); }
-  .prov-card.active-jwk    { border-color: var(--teal-border); background: rgba(45,212,160,0.04); }
-  .prov-card.active-cloud  { border-color: var(--blue-border); background: rgba(91,168,245,0.04); }
+  .prov-card.active-jwk    { border-color: var(--teal-border);   background: rgba(45,212,160,0.04); }
+  .prov-card.active-cloud  { border-color: var(--blue-border);   background: rgba(91,168,245,0.04); }
   .prov-card.active-acme   { border-color: var(--purple-border); background: rgba(167,139,250,0.04); }
-  .prov-card.active-oidc   { border-color: var(--coral-border); background: rgba(248,113,113,0.04); }
+  .prov-card.active-oidc   { border-color: var(--coral-border);  background: rgba(248,113,113,0.04); }
 
   .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
   .card-icon {
@@ -295,16 +519,15 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 18px; flex-shrink: 0;
   }
-  .icon-teal   { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-border); }
-  .icon-blue   { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+  .icon-teal   { background: var(--teal-dim);   color: var(--teal);   border: 1px solid var(--teal-border); }
+  .icon-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid var(--blue-border); }
   .icon-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple-border); }
-  .icon-coral  { background: var(--coral-dim); color: var(--coral); border: 1px solid var(--coral-border); }
+  .icon-coral  { background: var(--coral-dim);  color: var(--coral);  border: 1px solid var(--coral-border); }
 
   .card-title { font-size: 14px; font-weight: 500; color: var(--text); }
   .card-sub   { font-size: 11px; color: var(--text3); font-family: var(--mono); }
   .card-desc  { font-size: 12px; color: var(--text2); line-height: 1.55; margin: 10px 0; }
 
-  /* Detail panel */
   .detail-panel {
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -330,7 +553,6 @@
     line-height: 1.7;
   }
 
-  /* Compare table */
   .compare-section { margin-top: 32px; }
   .compare-label { font-size: 12px; color: var(--text3); font-family: var(--mono); margin-bottom: 10px; }
   .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -348,7 +570,6 @@
   .dot-mid  { color: #fbbf24; }
   .dot-bad  { color: #f87171; }
 
-  /* Footer */
   footer {
     border-top: 1px solid var(--border);
     padding: 20px 40px;
@@ -363,6 +584,47 @@
 </head>
 <body>
 
+<!-- ─── INTRO OVERLAY ─────────────────────────────────────────── -->
+<div id="intro-overlay">
+  <div class="intro-logo">step-ca</div>
+
+  <div class="intro-pipeline">
+    <div class="intro-node">
+      <div class="intro-node-circle">🏛</div>
+      <div class="intro-node-label">Bootstrap</div>
+    </div>
+    <div class="intro-arrow"></div>
+    <div class="intro-node">
+      <div class="intro-node-circle blue">🔑</div>
+      <div class="intro-node-label">Autenticación</div>
+    </div>
+    <div class="intro-arrow blue-purple"></div>
+    <div class="intro-node">
+      <div class="intro-node-circle purple">📄</div>
+      <div class="intro-node-label">Claves / CSR</div>
+    </div>
+    <div class="intro-arrow purple-amber"></div>
+    <div class="intro-node">
+      <div class="intro-node-circle amber" style="border-color:#fbbf24;background:rgba(251,191,36,0.08)">✅</div>
+      <div class="intro-node-label">Firma y emisión</div>
+    </div>
+    <div class="intro-arrow amber-coral"></div>
+    <div class="intro-node">
+      <div class="intro-node-circle" style="border-color:#2dd4a0">♻</div>
+      <div class="intro-node-label">Renovación auto</div>
+    </div>
+    <div class="intro-arrow" style="background:linear-gradient(90deg,#2dd4a0,#f87171)"></div>
+    <div class="intro-node">
+      <div class="intro-node-circle coral" style="border-color:#f87171;background:rgba(248,113,113,0.08)">🚫</div>
+      <div class="intro-node-label">Revocación<span class="intro-cursor"></span></div>
+    </div>
+  </div>
+
+  <div class="intro-subtitle">ciclo de vida completo · certificados x.509 · 24h</div>
+  <button class="intro-skip" onclick="skipIntro()">saltar intro ↓</button>
+</div>
+
+<!-- ─── MAIN UI ──────────────────────────────────────────────── -->
 <header>
   <span class="logo">step-ca</span>
   <h1>Ciclo de vida de certificados &amp; Provisioners para IA</h1>
@@ -385,7 +647,7 @@
 
     <div class="stage-nav" id="lifecycle-nav"></div>
 
-    <!-- Stage 1 -->
+    <!-- Stage 1: Bootstrap -->
     <div class="panel active card" id="ls1">
       <span class="badge badge-teal">01 / 06</span>
       <p class="panel-title">Bootstrapping — Establecer confianza</p>
@@ -406,10 +668,33 @@
         <div class="di"><strong>¿Por qué?</strong>Permite confiar en futuras conexiones TLS</div>
       </div>
       <div class="tag-row"><span class="tag">PKI</span><span class="tag">Root CA</span><span class="tag">Trust anchor</span><span class="tag">Fingerprint</span></div>
+
+      <button class="cli-toggle" onclick="toggleCli('cli1', this)">
+        <span class="cli-toggle-icon">▶</span>
+        Ver comandos completos
+      </button>
+      <div class="cli-block" id="cli1">
+        <div class="cli-header">
+          <span class="cli-header-label">shell · bootstrap</span>
+          <button class="cli-copy" onclick="copyCli('cli1', this)">copiar</button>
+        </div>
+        <pre class="cli-pre"><span class="comment"># 1. Obtener el fingerprint del server (ejecutar en el servidor CA)</span>
+step certificate fingerprint $(step path)/certs/root_ca.crt
+
+<span class="comment"># 2. Bootstrap en el cliente (usar el fingerprint obtenido arriba)</span>
+step ca bootstrap \
+  <span class="flag">--ca-url</span> <span class="value">https://ca.internal:9000</span> \
+  <span class="flag">--fingerprint</span> <span class="value">abc123...sha256hash</span>
+
+<span class="comment"># Resultado: descarga root_ca.crt y configura $STEPPATH/config/defaults.json</span>
+<span class="comment"># Verificar que quedó bien:</span>
+step ca health</pre>
+      </div>
+
       <div class="nav-row"><span></span><span class="step-counter">1 / 6</span><button class="nav-btn" onclick="goLifecycle(2)">Autenticación →</button></div>
     </div>
 
-    <!-- Stage 2 -->
+    <!-- Stage 2: Auth -->
     <div class="panel card" id="ls2">
       <span class="badge badge-blue">02 / 06</span>
       <p class="panel-title">Autenticación — Provisioners</p>
@@ -430,10 +715,39 @@
         <div class="di"><strong>Cloud</strong>AWS / GCP / Azure / K8s</div>
       </div>
       <div class="tag-row"><span class="tag">JWK</span><span class="tag">OIDC</span><span class="tag">ACME</span><span class="tag">K8sSA</span><span class="tag">mTLS</span></div>
+
+      <button class="cli-toggle" onclick="toggleCli('cli2', this)">
+        <span class="cli-toggle-icon">▶</span>
+        Ver comandos completos
+      </button>
+      <div class="cli-block" id="cli2">
+        <div class="cli-header">
+          <span class="cli-header-label">shell · autenticación por provisioner</span>
+          <button class="cli-copy" onclick="copyCli('cli2', this)">copiar</button>
+        </div>
+        <pre class="cli-pre"><span class="comment"># JWK: generar token JWT (el más común para agentes IA)</span>
+step ca token <span class="value">agent.service.internal</span> \
+  <span class="flag">--provisioner</span> <span class="value">jwk-agent</span> \
+  <span class="flag">--key</span> <span class="value">/etc/step/jwk-key.json</span>
+
+<span class="comment"># OIDC: autenticación interactiva con Google / GitHub</span>
+step ca token <span class="value">agent.service.internal</span> \
+  <span class="flag">--provisioner</span> <span class="value">google-oidc</span>
+
+<span class="comment"># Cloud AWS: usa el identity document de la instancia EC2</span>
+step ca token <span class="value">agent.service.internal</span> \
+  <span class="flag">--provisioner</span> <span class="value">aws</span>
+
+<span class="comment"># K8s: usa el Service Account token del pod</span>
+step ca token <span class="value">agent.service.internal</span> \
+  <span class="flag">--provisioner</span> <span class="value">k8ssa</span> \
+  <span class="flag">--k8s-token-file</span> <span class="value">/var/run/secrets/kubernetes.io/serviceaccount/token</span></pre>
+      </div>
+
       <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(1)">← Bootstrap</button><span class="step-counter">2 / 6</span><button class="nav-btn" onclick="goLifecycle(3)">Claves / CSR →</button></div>
     </div>
 
-    <!-- Stage 3 -->
+    <!-- Stage 3: Keys / CSR -->
     <div class="panel card" id="ls3">
       <span class="badge badge-teal">03 / 06</span>
       <p class="panel-title">Generación de claves y CSR</p>
@@ -458,10 +772,37 @@
         <div class="di"><strong>Estándar</strong>PKCS#10 / X.509</div>
       </div>
       <div class="tag-row"><span class="tag">Asymmetric crypto</span><span class="tag">CSR</span><span class="tag">PKCS#10</span><span class="tag">Zero trust</span></div>
+
+      <button class="cli-toggle" onclick="toggleCli('cli3', this)">
+        <span class="cli-toggle-icon">▶</span>
+        Ver comandos completos
+      </button>
+      <div class="cli-block" id="cli3">
+        <div class="cli-header">
+          <span class="cli-header-label">shell · claves y csr</span>
+          <button class="cli-copy" onclick="copyCli('cli3', this)">copiar</button>
+        </div>
+        <pre class="cli-pre"><span class="comment"># Generar solo el par de claves (sin CSR todavía)</span>
+step crypto keypair \
+  <span class="value">agent.pub agent.key</span> \
+  <span class="flag">--kty</span> <span class="value">EC</span> \
+  <span class="flag">--curve</span> <span class="value">P-256</span>
+
+<span class="comment"># Crear CSR a partir del par de claves existente</span>
+step certificate create \
+  <span class="value">agent.service.internal</span> agent.csr agent.key \
+  <span class="flag">--csr</span> \
+  <span class="flag">--san</span> <span class="value">agent.service.internal</span> \
+  <span class="flag">--san</span> <span class="value">127.0.0.1</span>
+
+<span class="comment"># Inspeccionar el CSR generado</span>
+step certificate inspect agent.csr</pre>
+      </div>
+
       <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(2)">← Provisioners</button><span class="step-counter">3 / 6</span><button class="nav-btn" onclick="goLifecycle(4)">Firma y emisión →</button></div>
     </div>
 
-    <!-- Stage 4 -->
+    <!-- Stage 4: Sign -->
     <div class="panel card" id="ls4">
       <span class="badge badge-teal">04 / 06</span>
       <p class="panel-title">Firma y emisión</p>
@@ -486,10 +827,41 @@
         <div class="di"><strong>Motivo</strong>Short-lived = menor superficie de ataque</div>
       </div>
       <div class="tag-row"><span class="tag">Intermediate CA</span><span class="tag">X.509</span><span class="tag">Short-lived</span></div>
+
+      <button class="cli-toggle" onclick="toggleCli('cli4', this)">
+        <span class="cli-toggle-icon">▶</span>
+        Ver comandos completos
+      </button>
+      <div class="cli-block" id="cli4">
+        <div class="cli-header">
+          <span class="cli-header-label">shell · solicitar y firmar certificado</span>
+          <button class="cli-copy" onclick="copyCli('cli4', this)">copiar</button>
+        </div>
+        <pre class="cli-pre"><span class="comment"># Flujo completo: token + certificado en un solo comando (recomendado)</span>
+step ca certificate <span class="value">agent.service.internal</span> \
+  agent.crt agent.key \
+  <span class="flag">--provisioner</span> <span class="value">jwk-agent</span> \
+  <span class="flag">--not-after</span> <span class="value">24h</span> \
+  <span class="flag">--san</span> <span class="value">agent.service.internal</span>
+
+<span class="comment"># Con token pre-generado</span>
+TOKEN=$(step ca token agent.service.internal --provisioner jwk-agent)
+step ca certificate <span class="value">agent.service.internal</span> \
+  agent.crt agent.key \
+  <span class="flag">--token</span> <span class="value">$TOKEN</span>
+
+<span class="comment"># Firmar un CSR existente (si generaste el CSR por separado)</span>
+step ca sign agent.csr agent.crt \
+  <span class="flag">--token</span> <span class="value">$TOKEN</span>
+
+<span class="comment"># Inspeccionar el certificado emitido</span>
+step certificate inspect agent.crt</pre>
+      </div>
+
       <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(3)">← Claves / CSR</button><span class="step-counter">4 / 6</span><button class="nav-btn" onclick="goLifecycle(5)">Renovación →</button></div>
     </div>
 
-    <!-- Stage 5 -->
+    <!-- Stage 5: Renewal -->
     <div class="panel card" id="ls5">
       <span class="badge badge-amber">05 / 06</span>
       <p class="panel-title">Renovación automatizada</p>
@@ -518,10 +890,38 @@
         <div class="di"><strong>Fallo = expiración</strong>Si se bloquea la renovación</div>
       </div>
       <div class="tag-row"><span class="tag">Daemon</span><span class="tag">Auto-renewal</span><span class="tag">Zero downtime</span></div>
+
+      <button class="cli-toggle" onclick="toggleCli('cli5', this)">
+        <span class="cli-toggle-icon">▶</span>
+        Ver comandos completos
+      </button>
+      <div class="cli-block" id="cli5">
+        <div class="cli-header">
+          <span class="cli-header-label">shell · renovación automática</span>
+          <button class="cli-copy" onclick="copyCli('cli5', this)">copiar</button>
+        </div>
+        <pre class="cli-pre"><span class="comment"># Modo daemon: renueva automáticamente (recomendado para producción)</span>
+step ca renew \
+  agent.crt agent.key \
+  <span class="flag">--daemon</span> \
+  <span class="flag">--exec</span> <span class="value">"systemctl reload my-agent"</span>
+<span class="comment"># --exec corre ese comando después de cada renovación exitosa</span>
+
+<span class="comment"># Renovación manual (one-shot, útil para testing)</span>
+step ca renew agent.crt agent.key <span class="flag">--force</span>
+
+<span class="comment"># Ver cuándo expira el cert actual</span>
+step certificate inspect agent.crt --format json | jq .validity
+
+<span class="comment"># Systemd unit: crear /etc/systemd/system/step-renew.service</span>
+<span class="comment"># ExecStart=/usr/bin/step ca renew /etc/step/agent.crt /etc/step/agent.key \</span>
+<span class="comment">#   --daemon --exec "systemctl reload my-agent"</span></pre>
+      </div>
+
       <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(4)">← Firma</button><span class="step-counter">5 / 6</span><button class="nav-btn" onclick="goLifecycle(6)">Revocación →</button></div>
     </div>
 
-    <!-- Stage 6 -->
+    <!-- Stage 6: Revocation -->
     <div class="panel card" id="ls6">
       <span class="badge badge-coral">06 / 06</span>
       <p class="panel-title">Revocación</p>
@@ -555,7 +955,29 @@
           </div>
         </div>
         El método estándar. Con certs de 24h, comprometer uno da ventana mínima. El servidor simplemente deja de renovar si el cert está comprometido.
+
+        <button class="cli-toggle" onclick="toggleCli('cli6p', this)" style="margin-top:12px">
+          <span class="cli-toggle-icon">▶</span>
+          Ver comandos completos
+        </button>
+        <div class="cli-block" id="cli6p">
+          <div class="cli-header">
+            <span class="cli-header-label">shell · revocación pasiva</span>
+            <button class="cli-copy" onclick="copyCli('cli6p', this)">copiar</button>
+          </div>
+          <pre class="cli-pre"><span class="comment"># Bloquear renovación de un certificado específico</span>
+<span class="comment"># (pasiva: el cert expira solo, solo bloqueamos la renovación futura)</span>
+step ca revoke \
+  <span class="flag">--serial</span> <span class="value">$(step certificate inspect agent.crt --format json | jq -r .serialNumber)</span> \
+  <span class="flag">--reason</span> <span class="value">"Credential rotated"</span> \
+  <span class="flag">--reasonCode</span> <span class="value">4</span>
+<span class="comment"># reasonCode 4 = superseded</span>
+
+<span class="comment"># El cert sigue válido hasta expirar (en ≤24h)</span>
+<span class="comment"># La CA rechaza el siguiente intento de renovación automáticamente</span></pre>
+        </div>
       </div>
+
       <div class="revoke-detail" id="detail-active">
         <div class="flow" style="margin-bottom:10px;">
           <div class="flow-row">
@@ -575,7 +997,36 @@
           </div>
         </div>
         Revocación inmediata. El cliente descarga la CRL antes de cada conexión TLS y bloquea si encuentra el número de serie en la lista negra.
+
+        <button class="cli-toggle" onclick="toggleCli('cli6a', this)" style="margin-top:12px">
+          <span class="cli-toggle-icon">▶</span>
+          Ver comandos completos
+        </button>
+        <div class="cli-block" id="cli6a">
+          <div class="cli-header">
+            <span class="cli-header-label">shell · revocación activa (crl)</span>
+            <button class="cli-copy" onclick="copyCli('cli6a', this)">copiar</button>
+          </div>
+          <pre class="cli-pre"><span class="comment"># Revocar un certificado inmediatamente (se añade a la CRL)</span>
+step ca revoke \
+  <span class="flag">--cert</span> <span class="value">agent.crt</span> \
+  <span class="flag">--key</span>  <span class="value">agent.key</span> \
+  <span class="flag">--reason</span> <span class="value">"Clave comprometida"</span> \
+  <span class="flag">--reasonCode</span> <span class="value">1</span>
+<span class="comment"># reasonCode 1 = keyCompromise</span>
+
+<span class="comment"># Si no tenés la clave (la perdiste): revocar con admin credentials</span>
+step ca revoke \
+  <span class="flag">--serial</span> <span class="value">4f3a2b1c...</span> \
+  <span class="flag">--reason</span> <span class="value">"Key lost"</span> \
+  <span class="flag">--ca-url</span> <span class="value">https://ca.internal:9000</span> \
+  <span class="flag">--admin-subject</span> <span class="value">admin@internal</span>
+
+<span class="comment"># Ver la CRL actual</span>
+step ca crl | step certificate inspect --bundle --insecure</pre>
+        </div>
       </div>
+
       <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(5)">← Renovación</button><span class="step-counter">6 / 6</span><button class="nav-btn" onclick="goLifecycle(1)">↺ Reiniciar</button></div>
     </div>
   </div>
@@ -795,7 +1246,17 @@ step ca certificate &lt;subject&gt; agent.crt agent.key \
 </footer>
 
 <script>
-  // Tab switching
+  // ─── INTRO ────────────────────────────────────────────────────
+  function skipIntro() {
+    const overlay = document.getElementById('intro-overlay');
+    overlay.classList.add('fade-out');
+    setTimeout(() => overlay.remove(), 500);
+  }
+
+  // Auto-dismiss after ~3.5 seconds (animations finish at ~2.5s + small buffer)
+  setTimeout(skipIntro, 3500);
+
+  // ─── TABS ────────────────────────────────────────────────────
   function showSection(id, btn) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -803,7 +1264,7 @@ step ca certificate &lt;subject&gt; agent.crt agent.key \
     btn.classList.add('active');
   }
 
-  // Lifecycle nav
+  // ─── LIFECYCLE NAV ────────────────────────────────────────────
   const lStages = [
     '1. Bootstrap','2. Autenticación','3. Claves / CSR',
     '4. Firma','5. Renovación','6. Revocación'
@@ -827,7 +1288,7 @@ step ca certificate &lt;subject&gt; agent.crt agent.key \
     document.getElementById('lnb' + n).classList.add('active');
   }
 
-  // Revocation
+  // ─── REVOCATION ───────────────────────────────────────────────
   function selRevoke(type) {
     document.getElementById('opt-passive').className = 'revoke-opt';
     document.getElementById('opt-active').className = 'revoke-opt';
@@ -842,7 +1303,7 @@ step ca certificate &lt;subject&gt; agent.crt agent.key \
     }
   }
 
-  // Provisioner selection
+  // ─── PROVISIONER SELECTION ────────────────────────────────────
   const provColors = { jwk:'active-jwk', cloud:'active-cloud', acme:'active-acme', oidc:'active-oidc' };
   let pCurrent = null;
   function selProv(id) {
@@ -854,6 +1315,30 @@ step ca certificate &lt;subject&gt; agent.crt agent.key \
     pCurrent = id;
     document.getElementById('pc-' + id).className = 'prov-card ' + provColors[id];
     document.getElementById('pd-' + id).classList.add('visible');
+  }
+
+  // ─── CLI TOGGLE ───────────────────────────────────────────────
+  function toggleCli(id, btn) {
+    const block = document.getElementById(id);
+    const isOpen = block.classList.contains('open');
+    block.classList.toggle('open');
+    btn.classList.toggle('open');
+  }
+
+  // ─── COPY CLI ─────────────────────────────────────────────────
+  function copyCli(id, btn) {
+    const pre = document.querySelector('#' + id + ' .cli-pre');
+    // Strip HTML tags to get plain text
+    const text = pre.innerText || pre.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = '✓ copiado';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = orig;
+        btn.classList.remove('copied');
+      }, 1800);
+    });
   }
 </script>
 </body>
