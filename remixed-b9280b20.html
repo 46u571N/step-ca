@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>step-ca · Ciclo de vida de certificados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --bg2: #ffffff;
+    --bg3: #eef0f3;
+    --border: rgba(0,0,0,0.09);
+    --border2: rgba(0,0,0,0.16);
+    --text: #1a1d24;
+    --text2: #555b6a;
+    --text3: #9199a8;
+    --teal: #0e9e71;
+    --teal-dim: rgba(14,158,113,0.1);
+    --teal-border: rgba(14,158,113,0.3);
+    --blue: #2563eb;
+    --blue-dim: rgba(37,99,235,0.1);
+    --blue-border: rgba(37,99,235,0.3);
+    --purple: #7c3aed;
+    --purple-dim: rgba(124,58,237,0.1);
+    --purple-border: rgba(124,58,237,0.3);
+    --coral: #dc2626;
+    --coral-dim: rgba(220,38,38,0.1);
+    --coral-border: rgba(220,38,38,0.3);
+    --amber: #b45309;
+    --amber-dim: rgba(180,83,9,0.08);
+    --font: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+    --radius: 8px;
+    --radius-lg: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--teal);
+    background: var(--teal-dim);
+    border: 1px solid var(--teal-border);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+  header h1 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  header span {
+    font-size: 13px;
+    color: var(--text3);
+    margin-left: auto;
+    font-family: var(--mono);
+  }
+
+  /* Nav tabs */
+  nav {
+    display: flex;
+    gap: 4px;
+    padding: 24px 40px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    cursor: pointer;
+    color: var(--text2);
+    background: transparent;
+    font-family: var(--font);
+    transition: all .2s;
+    position: relative;
+    bottom: -1px;
+  }
+  .tab:hover { color: var(--text); background: var(--bg2); }
+  .tab.active {
+    color: var(--text);
+    background: var(--bg2);
+    border-color: var(--border);
+    border-bottom-color: var(--bg2);
+  }
+
+  /* Main layout */
+  main { padding: 40px; max-width: 960px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .section-intro { margin-bottom: 28px; }
+  .section-intro h2 { font-size: 20px; font-weight: 500; margin-bottom: 6px; }
+  .section-intro p { font-size: 14px; color: var(--text2); }
+
+  /* Stage nav */
+  .stage-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .stage-btn {
+    font-size: 12px;
+    font-family: var(--font);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .stage-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .stage-btn.active {
+    background: var(--teal-dim);
+    color: var(--teal);
+    border-color: var(--teal-border);
+    font-weight: 500;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .badge-teal { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-border); }
+  .badge-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple-border); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+  .badge-coral { background: var(--coral-dim); color: var(--coral); border: 1px solid var(--coral-border); }
+
+  .panel-title { font-size: 17px; font-weight: 500; margin-bottom: 6px; }
+  .panel-desc { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.6; }
+
+  /* Flow */
+  .flow { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; }
+  .flow-row { display: flex; align-items: center; gap: 10px; }
+  .flow-box {
+    flex: 1;
+    padding: 9px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    font-size: 13px;
+    color: var(--text);
+  }
+  .flow-box.hi { border-color: var(--teal-border); background: var(--teal-dim); color: var(--teal); }
+  .flow-box.hi-blue { border-color: var(--blue-border); background: var(--blue-dim); color: var(--blue); }
+  .flow-box.hi-purple { border-color: var(--purple-border); background: var(--purple-dim); color: var(--purple); }
+  .flow-box.hi-coral { border-color: var(--coral-border); background: var(--coral-dim); color: var(--coral); }
+  .flow-box.dim { opacity: .4; }
+  .flow-arr { color: var(--text3); font-size: 16px; flex-shrink: 0; }
+  .flow-down { margin-left: 28px; color: var(--text3); font-size: 16px; }
+
+  /* Detail grid */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .di {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .di strong {
+    display: block;
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 3px;
+    font-family: var(--mono);
+  }
+
+  /* Tags */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .tag {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text3);
+  }
+
+  /* Nav row */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .nav-btn {
+    font-size: 12px;
+    font-family: var(--font);
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .nav-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .step-counter { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+
+  /* Revocation */
+  .revoke-choice { display: flex; gap: 10px; margin-top: 10px; }
+  .revoke-opt {
+    flex: 1; padding: 12px; border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    cursor: pointer; font-size: 12px; color: var(--text2);
+    text-align: center; font-family: var(--font);
+    transition: all .2s;
+  }
+  .revoke-opt:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .revoke-opt.sel-passive { border-color: var(--teal-border); background: var(--teal-dim); color: var(--teal); }
+  .revoke-opt.sel-active  { border-color: var(--coral-border); background: var(--coral-dim); color: var(--coral); }
+  .revoke-detail { margin-top: 12px; padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--bg3); font-size: 13px; color: var(--text2); line-height: 1.6; display: none; }
+  .revoke-detail.visible { display: block; }
+
+  /* Provisioners section */
+  .prov-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .prov-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .prov-card:hover { border-color: var(--border2); }
+  .prov-card.active-jwk    { border-color: var(--teal-border); background: rgba(45,212,160,0.04); }
+  .prov-card.active-cloud  { border-color: var(--blue-border); background: rgba(91,168,245,0.04); }
+  .prov-card.active-acme   { border-color: var(--purple-border); background: rgba(167,139,250,0.04); }
+  .prov-card.active-oidc   { border-color: var(--coral-border); background: rgba(248,113,113,0.04); }
+
+  .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .card-icon {
+    width: 38px; height: 38px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .icon-teal   { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-border); }
+  .icon-blue   { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue-border); }
+  .icon-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple-border); }
+  .icon-coral  { background: var(--coral-dim); color: var(--coral); border: 1px solid var(--coral-border); }
+
+  .card-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .card-sub   { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+  .card-desc  { font-size: 12px; color: var(--text2); line-height: 1.55; margin: 10px 0; }
+
+  /* Detail panel */
+  .detail-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-top: 4px;
+    display: none;
+  }
+  .detail-panel.visible { display: block; }
+  .detail-title { font-size: 14px; font-weight: 500; margin-bottom: 14px; }
+
+  .code-block {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #f0faf6;
+    border: 1px solid var(--teal-border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    color: var(--teal);
+    margin-top: 14px;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.7;
+  }
+
+  /* Compare table */
+  .compare-section { margin-top: 32px; }
+  .compare-label { font-size: 12px; color: var(--text3); font-family: var(--mono); margin-bottom: 10px; }
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .compare-table th {
+    text-align: left;
+    padding: 8px 12px;
+    color: var(--text3);
+    font-weight: 400;
+    font-family: var(--mono);
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  .compare-table td:first-child { color: var(--text); font-weight: 500; font-family: var(--mono); }
+  .dot-good { color: #2dd4a0; }
+  .dot-mid  { color: #fbbf24; }
+  .dot-bad  { color: #f87171; }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 40px;
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">step-ca</span>
+  <h1>Ciclo de vida de certificados &amp; Provisioners para IA</h1>
+  <span>Smallstep / ACME</span>
+</header>
+
+<nav>
+  <button class="tab active" onclick="showSection('lifecycle', this)">Ciclo de vida</button>
+  <button class="tab" onclick="showSection('provisioners', this)">Provisioners para IA</button>
+</nav>
+
+<main>
+
+  <!-- SECTION 1: Lifecycle -->
+  <div class="section active" id="sec-lifecycle">
+    <div class="section-intro">
+      <h2>Ciclo de vida de certificados en step-ca</h2>
+      <p>Explorá cada etapa del flujo completo: desde establecer confianza hasta la revocación.</p>
+    </div>
+
+    <div class="stage-nav" id="lifecycle-nav"></div>
+
+    <!-- Stage 1 -->
+    <div class="panel active card" id="ls1">
+      <span class="badge badge-teal">01 / 06</span>
+      <p class="panel-title">Bootstrapping — Establecer confianza</p>
+      <p class="panel-desc">El cliente descarga el certificado raíz de la CA y valida su autenticidad usando un fingerprint seguro compartido fuera de banda.</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi">Cliente</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">step ca bootstrap</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi">CA raíz</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>Comando</strong>step ca bootstrap --fingerprint &lt;hash&gt;</div>
+        <div class="di"><strong>Resultado</strong>Cert. raíz almacenado localmente</div>
+        <div class="di"><strong>Valida</strong>Fingerprint SHA-256 del cert. raíz</div>
+        <div class="di"><strong>¿Por qué?</strong>Permite confiar en futuras conexiones TLS</div>
+      </div>
+      <div class="tag-row"><span class="tag">PKI</span><span class="tag">Root CA</span><span class="tag">Trust anchor</span><span class="tag">Fingerprint</span></div>
+      <div class="nav-row"><span></span><span class="step-counter">1 / 6</span><button class="nav-btn" onclick="goLifecycle(2)">Autenticación →</button></div>
+    </div>
+
+    <!-- Stage 2 -->
+    <div class="panel card" id="ls2">
+      <span class="badge badge-blue">02 / 06</span>
+      <p class="panel-title">Autenticación — Provisioners</p>
+      <p class="panel-desc">El cliente demuestra su identidad ante la CA mediante un Provisioner. Si tiene éxito, recibe un token temporal que autoriza la emisión.</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi-blue">Cliente</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">Provisioner (JWK / OIDC / ACME)</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi-blue">Token temporal</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>JWK</strong>Token JWT programático</div>
+        <div class="di"><strong>OIDC</strong>Login OAuth (Google, GitHub)</div>
+        <div class="di"><strong>ACME</strong>Challenge automático</div>
+        <div class="di"><strong>Cloud</strong>AWS / GCP / Azure / K8s</div>
+      </div>
+      <div class="tag-row"><span class="tag">JWK</span><span class="tag">OIDC</span><span class="tag">ACME</span><span class="tag">K8sSA</span><span class="tag">mTLS</span></div>
+      <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(1)">← Bootstrap</button><span class="step-counter">2 / 6</span><button class="nav-btn" onclick="goLifecycle(3)">Claves / CSR →</button></div>
+    </div>
+
+    <!-- Stage 3 -->
+    <div class="panel card" id="ls3">
+      <span class="badge badge-teal">03 / 06</span>
+      <p class="panel-title">Generación de claves y CSR</p>
+      <p class="panel-desc">El cliente genera localmente su par de claves y crea una Solicitud de Firma de Certificado (CSR). La clave privada nunca sale del cliente.</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi">Cliente</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">Genera par de claves</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box dim">🔐 Clave privada (local)</div>
+          <span class="flow-arr" style="opacity:.3">·</span>
+          <div class="flow-box hi">📄 CSR (sale hacia CA)</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>Clave privada</strong>Permanece en el cliente, nunca se transmite</div>
+        <div class="di"><strong>Clave pública</strong>Incluida en el CSR</div>
+        <div class="di"><strong>CSR contiene</strong>Identidad + clave pública + firma</div>
+        <div class="di"><strong>Estándar</strong>PKCS#10 / X.509</div>
+      </div>
+      <div class="tag-row"><span class="tag">Asymmetric crypto</span><span class="tag">CSR</span><span class="tag">PKCS#10</span><span class="tag">Zero trust</span></div>
+      <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(2)">← Provisioners</button><span class="step-counter">3 / 6</span><button class="nav-btn" onclick="goLifecycle(4)">Firma y emisión →</button></div>
+    </div>
+
+    <!-- Stage 4 -->
+    <div class="panel card" id="ls4">
+      <span class="badge badge-teal">04 / 06</span>
+      <p class="panel-title">Firma y emisión</p>
+      <p class="panel-desc">El cliente envía CSR + token al endpoint <code style="font-family:var(--mono);font-size:12px;background:var(--bg3);padding:1px 6px;border-radius:4px;">/1.0/sign</code>. La CA verifica, firma con su clave intermedia y devuelve el certificado.</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi">CSR + Token</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">POST /1.0/sign</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi">CA verifica</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box hi">✓ Certificado firmado (24h)</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>Endpoint</strong>/1.0/sign</div>
+        <div class="di"><strong>Firma con</strong>Clave intermedia de la CA</div>
+        <div class="di"><strong>Duración por defecto</strong>24 horas</div>
+        <div class="di"><strong>Motivo</strong>Short-lived = menor superficie de ataque</div>
+      </div>
+      <div class="tag-row"><span class="tag">Intermediate CA</span><span class="tag">X.509</span><span class="tag">Short-lived</span></div>
+      <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(3)">← Claves / CSR</button><span class="step-counter">4 / 6</span><button class="nav-btn" onclick="goLifecycle(5)">Renovación →</button></div>
+    </div>
+
+    <!-- Stage 5 -->
+    <div class="panel card" id="ls5">
+      <span class="badge badge-amber">05 / 06</span>
+      <p class="panel-title">Renovación automatizada</p>
+      <p class="panel-desc">Un proceso en segundo plano monitorea el tiempo y solicita automáticamente un nuevo certificado antes de que expire el actual.</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi" style="font-family:var(--mono);font-size:12px;">step ca renew --daemon</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">Monitorea tiempo</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box">~66% del tiempo transcurrido</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi">Solicita renovación</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box hi">♻ Nuevo cert. (24h más)</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>Proceso</strong>Daemon en background</div>
+        <div class="di"><strong>Cuándo renueva</strong>Antes del 66% de vida útil</div>
+        <div class="di"><strong>Sin intervención</strong>Totalmente automático</div>
+        <div class="di"><strong>Fallo = expiración</strong>Si se bloquea la renovación</div>
+      </div>
+      <div class="tag-row"><span class="tag">Daemon</span><span class="tag">Auto-renewal</span><span class="tag">Zero downtime</span></div>
+      <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(4)">← Firma</button><span class="step-counter">5 / 6</span><button class="nav-btn" onclick="goLifecycle(6)">Revocación →</button></div>
+    </div>
+
+    <!-- Stage 6 -->
+    <div class="panel card" id="ls6">
+      <span class="badge badge-coral">06 / 06</span>
+      <p class="panel-title">Revocación</p>
+      <p class="panel-desc">Dos enfoques según la urgencia. Seleccioná el tipo para ver el flujo detallado.</p>
+      <div class="revoke-choice">
+        <button class="revoke-opt" id="opt-passive" onclick="selRevoke('passive')">
+          <div style="font-size:20px;margin-bottom:6px">⏱</div>
+          <div style="font-weight:500;font-size:13px;margin-bottom:3px;">Pasiva</div>
+          <div style="font-size:11px;">Expiración natural</div>
+        </button>
+        <button class="revoke-opt" id="opt-active" onclick="selRevoke('active')">
+          <div style="font-size:20px;margin-bottom:6px">🚫</div>
+          <div style="font-weight:500;font-size:13px;margin-bottom:3px;">Activa (CRL)</div>
+          <div style="font-size:11px;">Acción inmediata</div>
+        </button>
+      </div>
+      <div class="revoke-detail" id="detail-passive">
+        <div class="flow" style="margin-bottom:10px;">
+          <div class="flow-row">
+            <div class="flow-box hi">Cert. activo (24h)</div>
+            <span class="flow-arr">→</span>
+            <div class="flow-box">Tiempo llega a 0</div>
+            <span class="flow-arr">→</span>
+            <div class="flow-box">Expirado</div>
+          </div>
+          <div class="flow-down">↓</div>
+          <div class="flow-row">
+            <div class="flow-box">CA bloquea renovación</div>
+            <span class="flow-arr">→</span>
+            <div class="flow-box hi-coral">Acceso denegado</div>
+          </div>
+        </div>
+        El método estándar. Con certs de 24h, comprometer uno da ventana mínima. El servidor simplemente deja de renovar si el cert está comprometido.
+      </div>
+      <div class="revoke-detail" id="detail-active">
+        <div class="flow" style="margin-bottom:10px;">
+          <div class="flow-row">
+            <div class="flow-box hi">Admin: step ca revoke</div>
+            <span class="flow-arr">→</span>
+            <div class="flow-box">CA añade nro. serie a CRL</div>
+          </div>
+          <div class="flow-down">↓</div>
+          <div class="flow-row">
+            <div class="flow-box">Cliente consulta /1.0/crl</div>
+            <span class="flow-arr">→</span>
+            <div class="flow-box">Compara nro. serie</div>
+          </div>
+          <div class="flow-down">↓</div>
+          <div class="flow-row">
+            <div class="flow-box hi-coral">🚫 Conexión bloqueada</div>
+          </div>
+        </div>
+        Revocación inmediata. El cliente descarga la CRL antes de cada conexión TLS y bloquea si encuentra el número de serie en la lista negra.
+      </div>
+      <div class="nav-row"><button class="nav-btn" onclick="goLifecycle(5)">← Renovación</button><span class="step-counter">6 / 6</span><button class="nav-btn" onclick="goLifecycle(1)">↺ Reiniciar</button></div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: Provisioners -->
+  <div class="section" id="sec-provisioners">
+    <div class="section-intro">
+      <h2>Provisioners para agentes de IA</h2>
+      <p>Smallstep recomienda certificados de corta duración y mTLS en lugar de API keys. Seleccioná un provisioner para ver el flujo y cuándo usarlo.</p>
+    </div>
+
+    <div class="prov-grid">
+      <div class="prov-card" id="pc-jwk" onclick="selProv('jwk')">
+        <div class="card-header">
+          <div class="card-icon icon-teal">🔑</div>
+          <div><p class="card-title">JWK</p><p class="card-sub">JSON Web Key</p></div>
+        </div>
+        <span class="badge badge-teal">Más versátil</span>
+        <p class="card-desc">Token JWT generado programáticamente desde el código del agente. Ideal para integraciones custom sin dependencia de infraestructura específica.</p>
+        <div class="tag-row"><span class="tag">JWT</span><span class="tag">Programático</span><span class="tag">Flexible</span></div>
+      </div>
+
+      <div class="prov-card" id="pc-cloud" onclick="selProv('cloud')">
+        <div class="card-header">
+          <div class="card-icon icon-blue">☁️</div>
+          <div><p class="card-title">Cloud / K8sSA</p><p class="card-sub">AWS · GCP · Azure · K8s</p></div>
+        </div>
+        <span class="badge badge-blue">Ideal en cloud</span>
+        <p class="card-desc">Valida la identidad del agente usando documentos de identidad nativos de la infraestructura. Sin secretos adicionales que gestionar.</p>
+        <div class="tag-row"><span class="tag">IAM</span><span class="tag">Instance identity</span><span class="tag">K8s SA</span></div>
+      </div>
+
+      <div class="prov-card" id="pc-acme" onclick="selProv('acme')">
+        <div class="card-header">
+          <div class="card-icon icon-purple">🔒</div>
+          <div><p class="card-title">ACME Device Attestation</p><p class="card-sub">Hardware-bound</p></div>
+        </div>
+        <span class="badge badge-purple">Máxima seguridad</span>
+        <p class="card-desc">Vincula criptográficamente el acceso del agente a hardware confiable (TPM, Secure Enclave). El certificado no puede migrar a otro dispositivo.</p>
+        <div class="tag-row"><span class="tag">TPM</span><span class="tag">Attest</span><span class="tag">Hardware</span></div>
+      </div>
+
+      <div class="prov-card" id="pc-oidc" onclick="selProv('oidc')">
+        <div class="card-header">
+          <div class="card-icon icon-coral">🌐</div>
+          <div><p class="card-title">OIDC / Google</p><p class="card-sub">OAuth 2.0 identity</p></div>
+        </div>
+        <span class="badge badge-coral">Identidad OAuth</span>
+        <p class="card-desc">El agente se autentica con un proveedor OAuth (Google, GitHub, etc.). Útil cuando el agente ya tiene una identidad OIDC establecida.</p>
+        <div class="tag-row"><span class="tag">OAuth</span><span class="tag">OIDC</span><span class="tag">SSO</span></div>
+      </div>
+    </div>
+
+    <!-- Prov detail panels -->
+    <div class="detail-panel" id="pd-jwk">
+      <p class="detail-title">JWK — flujo token JWT programático</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi">Agente IA genera JWT</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">Firma con clave JWK</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi">Envía a step-ca</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box hi">CA valida firma</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi">Emite cert. X.509 (24h)</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>Cuándo usarlo</strong>Integraciones custom, código propio del agente</div>
+        <div class="di"><strong>Requiere</strong>Par de claves JWK configurado en la CA</div>
+        <div class="di"><strong>Complejidad</strong>Media — hay que gestionar la clave JWK</div>
+        <div class="di"><strong>Portabilidad</strong>Alta — funciona en cualquier entorno</div>
+      </div>
+      <div class="code-block">step ca token &lt;subject&gt; --provisioner jwk-agent
+step ca certificate &lt;subject&gt; agent.crt agent.key \
+  --token $(step ca token agent-id)</div>
+    </div>
+
+    <div class="detail-panel" id="pd-cloud">
+      <p class="detail-title">Cloud / K8sSA — identidad de infraestructura</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi-blue">Agente en VM / Pod</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">Solicita identity doc</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi-blue">IMDSv2 / metadata</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box">step-ca verifica con cloud API</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi-blue">Emite cert. X.509 (24h)</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>AWS</strong>IMDSv2 instance identity document</div>
+        <div class="di"><strong>GCP</strong>Service account + metadata server</div>
+        <div class="di"><strong>K8s</strong>Service Account token (projected)</div>
+        <div class="di"><strong>Ventaja clave</strong>Sin secretos adicionales que rotar</div>
+      </div>
+      <div class="code-block">step ca certificate agent \
+  --provisioner aws \
+  --set instanceID=$(curl -s http://169.254.169.254/...)</div>
+    </div>
+
+    <div class="detail-panel" id="pd-acme">
+      <p class="detail-title">ACME Device Attestation — vinculado a hardware</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi-purple">Agente en hw confiable</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">TPM firma challenge ACME</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box">step-ca verifica atestación</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi-purple">Cert. atado al hw (24h)</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>Hardware</strong>TPM 2.0, Apple Secure Enclave, YubiKey</div>
+        <div class="di"><strong>Garantía</strong>El cert. no puede migrar a otro dispositivo</div>
+        <div class="di"><strong>Complejidad</strong>Alta — requiere hardware compatible</div>
+        <div class="di"><strong>Caso de uso</strong>Agentes en edge / entornos regulados</div>
+      </div>
+      <div class="code-block">step ca certificate agent \
+  --provisioner acme \
+  --attestation-uri tpm://device-id</div>
+    </div>
+
+    <div class="detail-panel" id="pd-oidc">
+      <p class="detail-title">OIDC — identidad OAuth del agente</p>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="flow-box hi-coral">Agente</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box">Login con Google / GitHub</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi-coral">ID token OIDC</div>
+        </div>
+        <div class="flow-down">↓</div>
+        <div class="flow-row">
+          <div class="flow-box">step-ca verifica con OIDC provider</div>
+          <span class="flow-arr">→</span>
+          <div class="flow-box hi-coral">Emite cert. X.509 (24h)</div>
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="di"><strong>Providers</strong>Google, GitHub, Azure AD, Okta</div>
+        <div class="di"><strong>Ventaja</strong>Reutiliza identidad existente del agente</div>
+        <div class="di"><strong>Límite</strong>Requiere interacción OAuth inicial</div>
+        <div class="di"><strong>Ideal para</strong>Agentes con service account de Google</div>
+      </div>
+      <div class="code-block">step ca certificate agent \
+  --provisioner google-oidc \
+  --token &lt;oidc-id-token&gt;</div>
+    </div>
+
+    <!-- Compare table -->
+    <div class="compare-section">
+      <p class="compare-label">comparativa rápida</p>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Provisioner</th>
+            <th>Complejidad</th>
+            <th>Sin secretos extra</th>
+            <th>Portabilidad</th>
+            <th>Mejor para</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>JWK</td>
+            <td class="dot-mid">Media</td>
+            <td class="dot-bad">No</td>
+            <td class="dot-good">Alta</td>
+            <td>Código custom del agente</td>
+          </tr>
+          <tr>
+            <td>Cloud / K8sSA</td>
+            <td class="dot-good">Baja</td>
+            <td class="dot-good">Sí</td>
+            <td class="dot-mid">Media</td>
+            <td>VM / contenedores en cloud</td>
+          </tr>
+          <tr>
+            <td>ACME Attestation</td>
+            <td class="dot-bad">Alta</td>
+            <td class="dot-good">Sí</td>
+            <td class="dot-bad">Baja (hw)</td>
+            <td>Edge / entornos regulados</td>
+          </tr>
+          <tr>
+            <td>OIDC</td>
+            <td class="dot-mid">Media</td>
+            <td class="dot-mid">Parcial</td>
+            <td class="dot-good">Alta</td>
+            <td>Agentes con service account</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>step-ca · Smallstep / ACME · Ciclo de vida &amp; Provisioners</span>
+  <span>Generado con Claude</span>
+</footer>
+
+<script>
+  // Tab switching
+  function showSection(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('sec-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // Lifecycle nav
+  const lStages = [
+    '1. Bootstrap','2. Autenticación','3. Claves / CSR',
+    '4. Firma','5. Renovación','6. Revocación'
+  ];
+  const lNav = document.getElementById('lifecycle-nav');
+  let lCurrent = 1;
+  lStages.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'stage-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = s;
+    btn.id = 'lnb' + (i + 1);
+    btn.onclick = () => goLifecycle(i + 1);
+    lNav.appendChild(btn);
+  });
+
+  function goLifecycle(n) {
+    document.getElementById('ls' + lCurrent).classList.remove('active');
+    document.getElementById('lnb' + lCurrent).classList.remove('active');
+    lCurrent = n;
+    document.getElementById('ls' + n).classList.add('active');
+    document.getElementById('lnb' + n).classList.add('active');
+  }
+
+  // Revocation
+  function selRevoke(type) {
+    document.getElementById('opt-passive').className = 'revoke-opt';
+    document.getElementById('opt-active').className = 'revoke-opt';
+    document.getElementById('detail-passive').classList.remove('visible');
+    document.getElementById('detail-active').classList.remove('visible');
+    if (type === 'passive') {
+      document.getElementById('opt-passive').classList.add('sel-passive');
+      document.getElementById('detail-passive').classList.add('visible');
+    } else {
+      document.getElementById('opt-active').classList.add('sel-active');
+      document.getElementById('detail-active').classList.add('visible');
+    }
+  }
+
+  // Provisioner selection
+  const provColors = { jwk:'active-jwk', cloud:'active-cloud', acme:'active-acme', oidc:'active-oidc' };
+  let pCurrent = null;
+  function selProv(id) {
+    if (pCurrent) {
+      document.getElementById('pc-' + pCurrent).className = 'prov-card';
+      document.getElementById('pd-' + pCurrent).classList.remove('visible');
+    }
+    if (pCurrent === id) { pCurrent = null; return; }
+    pCurrent = id;
+    document.getElementById('pc-' + id).className = 'prov-card ' + provColors[id];
+    document.getElementById('pd-' + id).classList.add('visible');
+  }
+</script>
+</body>
+</html>
